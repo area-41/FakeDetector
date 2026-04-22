@@ -31,7 +31,7 @@ O pipeline de detecção segue quatro etapas matemáticas fundamentais:
 * **Imagens Reais:** Apresentam gradientes orgânicos e ruído fotônico (shot noise) distribuído de forma estocástica e natural.
 * **Imagens de IA:** Frequentemente revelam padrões repetitivos ou "manchas" de variância artificial, fruto das camadas de convolução transposta e algoritmos de upsampling.
 
-## omo Usar
+## Como Usar
 
 ### Instalação
 
@@ -58,6 +58,39 @@ O arquivo eigenvalues_log.csv gerado permite comparar a "assinatura de energia" 
 - Scikit-Learn: Motor de cálculo do PCA.
 - Matplotlib: Visualização dos resultados.
 - Numpy: Álgebra linear e manipulação de matrizes.
+
+
+## Fundamentação Matemática
+
+O pipeline implementado baseia-se na análise da microestrutura da imagem através do domínio dos gradientes:
+- Luminância ($L$): A conversão utiliza os pesos da norma ITU-R BT.709: $L(x,y) = 0.2126R + 0.7152G + 0.0722B$.
+- Gradientes: São calculadas as derivadas espaciais $G_x = \frac{\partial L}{\partial x}$ e $G_y = \frac{\partial L}{\partial y}$.
+- Matriz de Covariância ($C$): Os vetores 2D de gradiente por pixel são organizados na matriz $M \in \mathbb{R}^{N \times 2}$, resultando em $C = \frac{1}{N} M^\top M$.
+- PCA: A Projeção PCA destaca a direção de maior variância dos gradientes, revelando artefatos invisíveis na imagem original.
+
+Atributo:
+- Imagem Real
+   - Variância (PC1) 0.60
+   - Assinatura Visual Texturas orgânicas e contornos suaves.
+   - Distribuição Gradientes seguem a física da luz natural.
+
+
+- Imagem Fake (Sintética)
+   - Variância (PC1) 0.53
+   - Assinatura Visual Ruído matemático uniforme e padrões de grade.
+   - Distribuição  "Artefatos de ""checkerboard"" por upsampling." 
+
+<img width="1489" height="920" alt="image" src="https://github.com/user-attachments/assets/03122338-2cc9-4bc2-aea6-032d739d2d49" />
+
+
+## Conclusões do Experimento
+Decaimento da Variância: A imagem real retém uma variância maior no primeiro componente principal (0.60), indicando uma estrutura de gradiente mais robusta e natural.
+
+Detecção de Artefatos: Enquanto a projeção PCA da imagem real mostra formas definidas pelo relevo e luz, a projeção da imagem fake (especialmente após a normalização robusta) tende a revelar a "assinatura digital" do modelo generativo, como o ruído estático visível no fundo da imagem do Pastor Alemão.
+
+Sensibilidade ao Ruído: O método provou ser altamente eficaz em distinguir a microestrutura de fotos capturadas por sensores CMOS de imagens sintetizadas por modelos de difusão ou GANs, que falham em replicar o ruído fotônico real.
+
+Este conjunto de testes valida o uso do Luminance-Gradient PCA como uma ferramenta poderosa de perícia digital.
 
 Autor: Victor Marques
 Nota: Este projeto é para fins educacionais e de pesquisa em segurança digital.
