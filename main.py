@@ -34,27 +34,31 @@ class PCADetector:
             raise FileNotFoundError(f"Imagem não encontrada: {image_path}")
 
         img = cv2.imread(image_path)
+        # Salva a versão RGB para o plot final
+        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        
         L = self.get_luminance(img)
         gx, gy = self.compute_gradients(L)
 
         # Flatten e Matrix M (Nx2)
         M = np.stack((gx.flatten(), gy.flatten()), axis=1)
 
-        # PCA para encontrar o Componente Principal 1
-        pca = PCA(n_components=1)
+        # PCA com 2 componentes (necessário para os eigenvalues no log CSV)
+        pca = PCA(n_components=2)
         projection = pca.fit_transform(M)
         
-        # Reconstrução da imagem PC1
-        pc1_img = projection.reshape(L.shape)
+        # Reconstrução da imagem PC1 usando a primeira coluna da projeção
+        pc1_img = projection[:, 0].reshape(L.shape)
         
-        # Normalização para visualização
+        # Normalização para visualização (0-255)
         pc1_normalized = cv2.normalize(pc1_img, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
         
         return {
-            "original": cv2.cvtColor(img, cv2.COLOR_BGR2RGB),
+            "original": img_rgb, 
             "luminance": L,
             "pc1_projection": pc1_normalized,
-            "variance_ratio": pca.explained_variance_ratio_[0]
+            "variance_ratio": pca.explained_variance_ratio_[0],
+            "eigenvalues": pca.explained_variance_ # Autovalores brutos para o CSV
         }
 
 def plot_results(results, title="PCA Gradient Analysis"):
